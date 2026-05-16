@@ -1,0 +1,5 @@
+# Compiled binary
+*.exe
+
+# Instance data (generated, not source code)
+instances/
