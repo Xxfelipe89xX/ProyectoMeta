@@ -1,10 +1,10 @@
 #include "../include/instance.hpp"
-// #include <algorithm>
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-// #include <unordered_map>
+#include <unordered_map>
 
 static std::string trim(const std::string &s) {
   size_t start = s.find_first_not_of(" \t\r\n");
