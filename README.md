@@ -2,34 +2,43 @@
 
 Primer paso para la solución del EVRP.
 El objetivo es minimizar el consumo energético total (kWh) al atender a todos los clientes, respetando restricciones de capacidad de carga, autonomía de batería y estaciones de recarga.
-Por ahora tenemos un greedy determinista para tener una primera solucion factible.
+El enfoque actual incluye una fase constructiva greedy, una fase de reparación de clientes faltantes y una búsqueda local para mejorar la factibilidad y reducir el consumo energético.
+
 ## Estructura del proyecto
 
-```
+```text
 ProyectoMeta/
-├── include/            # Headers (.hpp)
+├── include/           
 │   ├── instance.hpp
 │   ├── energy.hpp
 │   ├── solution.hpp
-│   └── constructive.hpp
-├── src/                # Código fuente (.cpp)
+│   ├── constructive.hpp
+│   ├── repair.hpp
+│   └── local_search.hpp
+├── src/               
 │   ├── main.cpp
 │   ├── instance.cpp
 │   ├── energy.cpp
 │   ├── solution.cpp
-│   └── constructive.cpp
+│   ├── constructive.cpp
+│   ├── repair.cpp
+│   └── local_search.cpp
 ├── generator/
-│   └── generador.py    # Generador de instancias
-└── instances/          # Instancias generadas (no versionadas)
-    ├── small/
-    ├── large/
-    └── json/
+│   └── generador.py    
+├── instances/          
+│   ├── small/
+│   ├── large/
+│   └── json/
+├── output/             
+│   └── results/
+└── run_batch.ps1       
 ```
 
 ## Requisitos
 
 - **g++** con soporte para C++17 (ej. MinGW / MSYS2 en Windows)
 - **Python 3** (para generar las instancias)
+- **PowerShell** (para usar el script de pruebas masivas)
 
 ## Paso a paso
 
@@ -39,25 +48,41 @@ ProyectoMeta/
 python3 generator/generador.py
 ```
 
-Esto crea 55 instancias (15 pequeñas + 40 grandes) dentro de la carpeta `instances/`.
+Esto crea las instancias dentro de la carpeta `instances/` (clasificadas en pequeñas y grandes).
 
 ### 2. Compilar el proyecto
 
-```bash
-g++ -std=c++17 -O3 -Wall -Wextra -Iinclude src/main.cpp src/instance.cpp src/energy.cpp src/solution.cpp src/constructive.cpp -o evrp
+```powershell
+g++ -std=c++17 -O3 -Wall -Wextra -Iinclude src/*.cpp -o evrp
 ```
 
-### 3. Ejecutar con una instancia
+### 3. Ejecutar de forma individual
 
-```bash
+Ejecución estándar con detalle paso a paso:
+```powershell
 ./evrp instances/small/C10R2.txt
 ```
 
-La salida mostrará las rutas generadas, energía consumida, emisiones de CO₂ y un detalle arco por arco de cada ruta.
+Ejecución para obtener una sola línea de resumen:
+```powershell
+./evrp --summary instances/small/C10R2.txt
+```
 
-## ¿Qué hace el código?
+### 4. Ejecutar lote de pruebas (Batch)
+
+Para probar automáticamente todas las instancias y obtener métricas globales, utiliza el script de PowerShell:
+
+```powershell
+.\run_batch.ps1
+```
+
+Este script iterará sobre las carpetas `small` y `large`, llamará a `./evrp --summary` y agrupará todos los resultados en archivos CSV y de resumen dentro de la carpeta `output/results/`.
+
+## ¿Qué hace el código actualmente?
 
 1. **Lectura de instancia** (`instance.cpp`): parsea el archivo `.txt` con la ubicación del depósito, clientes, estaciones de recarga y parámetros del vehículo.
 2. **Modelo de energía** (`energy.cpp`): calcula el consumo energético y las emisiones de cada arco según distancia, velocidad, peso del vehículo y carga transportada.
-3. **Heurística constructiva** (`constructive.cpp`): construye rutas de forma greedy evaluando, para cada cliente no visitado, la mejor forma de insertarlo (con o sin parada en estaciones de recarga), seleccionando el movimiento de menor consumo energético.
-4. **Evaluación de solución** (`solution.cpp`): verifica factibilidad (batería, capacidad, cobertura de clientes) y calcula los totales de energía, distancia y emisiones.
+3. **Heurística constructiva** (`constructive.cpp`): construye rutas iniciales de forma greedy.
+4. **Fase de reparación** (`repair.cpp`): identifica clientes que no fueron visitados e intenta reinsertarlos en rutas existentes o nuevas para buscar la factibilidad total.
+5. **Búsqueda local** (`local_search.cpp`): aplica operadores de mejora (como *relocate* intra-ruta o inter-ruta limitados) buscando reducir el consumo energético o corregir pequeñas desviaciones.
+6. **Evaluación de solución** (`solution.cpp`): verifica la factibilidad (batería, capacidad, cobertura de clientes) y reporta totales de energía, distancia y emisiones.

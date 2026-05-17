@@ -1,7 +1,6 @@
 #include "../include/local_search.hpp"
 #include "../include/solution.hpp"
 
-#include <limits>
 #include <vector>
 
 struct LocalMove {

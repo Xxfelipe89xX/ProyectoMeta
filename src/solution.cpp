@@ -1,13 +1,10 @@
 #include "../include/solution.hpp"
 #include "../include/energy.hpp"
 
-#include <algorithm>
 #include <iomanip>
 #include <iostream>
-#include <set>
 #include <sstream>
 #include <unordered_map>
-#include <unordered_set>
 
 static std::string node_type_to_string(NodeType t) {
   switch (t) {
