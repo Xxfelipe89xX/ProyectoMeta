@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <random>
 #include <unordered_set>
 #include <vector>
 
@@ -61,6 +62,10 @@ static bool better_candidate(const CandidateMove &a, const CandidateMove &b) {
   return lexicographically_smaller(a.append_nodes, b.append_nodes);
 }
 
+static bool candidate_cmp(const CandidateMove &a, const CandidateMove &b) {
+  return better_candidate(a, b);
+}
+
 static CandidateMove try_pattern(const Instance &inst,
                                  const std::vector<int> &open_route,
                                  int customer, int station_before,
@@ -68,12 +73,10 @@ static CandidateMove try_pattern(const Instance &inst,
   CandidateMove cand;
 
   int last = open_route.back();
-
   if (station_before == last)
     return cand;
 
   std::vector<int> tentative = open_route;
-
   int stations_used = 0;
 
   if (station_before != -1) {
@@ -142,46 +145,82 @@ best_append_for_customer(const Instance &inst,
   return best;
 }
 
-static CandidateMove best_next_move(const Instance &inst,
-                                    const std::vector<int> &open_route,
-                                    const std::unordered_set<int> &visited) {
-  CandidateMove best;
+static std::vector<CandidateMove>
+collect_feasible_moves(const Instance &inst, const std::vector<int> &open_route,
+                       const std::unordered_set<int> &visited) {
+  std::vector<CandidateMove> moves;
 
   for (int c : inst.customer_ids) {
     if (visited.count(c))
       continue;
 
     CandidateMove cand = best_append_for_customer(inst, open_route, c);
-    if (better_candidate(cand, best)) {
-      best = cand;
+    if (cand.feasible) {
+      moves.push_back(cand);
     }
   }
 
-  return best;
+  std::sort(moves.begin(), moves.end(), candidate_cmp);
+  return moves;
 }
 
-Solution greedy_constructive(const Instance &inst) {
+static CandidateMove best_next_move(const Instance &inst,
+                                    const std::vector<int> &open_route,
+                                    const std::unordered_set<int> &visited) {
+  std::vector<CandidateMove> moves =
+      collect_feasible_moves(inst, open_route, visited);
+  if (moves.empty())
+    return CandidateMove{};
+  return moves.front();
+}
+
+static CandidateMove
+randomized_next_move(const Instance &inst, const std::vector<int> &open_route,
+                     const std::unordered_set<int> &visited, std::mt19937 &rng,
+                     int top_k) {
+  std::vector<CandidateMove> moves =
+      collect_feasible_moves(inst, open_route, visited);
+  if (moves.empty())
+    return CandidateMove{};
+
+  int k = std::min(top_k, (int)moves.size());
+  if (k <= 1)
+    return moves.front();
+
+  std::uniform_int_distribution<int> dist(0, k - 1);
+  return moves[dist(rng)];
+}
+
+static Solution greedy_constructive_internal(const Instance &inst,
+                                             std::mt19937 *rng_ptr, int top_k) {
   Solution sol;
   std::unordered_set<int> visited;
 
   while ((int)visited.size() < (int)inst.customer_ids.size() &&
          (int)sol.routes.size() < inst.max_vehicles) {
-
     std::vector<int> open_route;
     open_route.push_back(inst.depot_start);
 
     bool added_customer = false;
 
     while (true) {
-      CandidateMove best = best_next_move(inst, open_route, visited);
-      if (!best.feasible)
+      CandidateMove chosen;
+
+      if (rng_ptr == nullptr) {
+        chosen = best_next_move(inst, open_route, visited);
+      } else {
+        chosen =
+            randomized_next_move(inst, open_route, visited, *rng_ptr, top_k);
+      }
+
+      if (!chosen.feasible)
         break;
 
-      for (int node : best.append_nodes) {
+      for (int node : chosen.append_nodes) {
         open_route.push_back(node);
       }
 
-      visited.insert(best.customer);
+      visited.insert(chosen.customer);
       added_customer = true;
     }
 
@@ -195,4 +234,15 @@ Solution greedy_constructive(const Instance &inst) {
 
   sol = evaluate_solution(inst, sol);
   return sol;
+}
+
+Solution greedy_constructive(const Instance &inst) {
+  return greedy_constructive_internal(inst, nullptr, 1);
+}
+
+Solution greedy_constructive_randomized(const Instance &inst, std::mt19937 &rng,
+                                        int top_k) {
+  if (top_k < 1)
+    top_k = 1;
+  return greedy_constructive_internal(inst, &rng, top_k);
 }
