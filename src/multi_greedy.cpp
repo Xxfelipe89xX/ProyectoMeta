@@ -46,26 +46,83 @@ generate_greedy_solutions(const Instance &inst,
     return pool;
 
   std::mt19937 rng(config.seed);
-  std::vector<std::string> seen;
+  
+  std::vector<Solution> pool_feasible;
+  std::vector<Solution> pool_infeasible;
+  std::vector<std::string> seen_feasible;
+  std::vector<std::string> seen_infeasible;
 
-  auto push_if_new = [&](const Solution &sol) {
+  auto push_feasible = [&](const Solution &sol) {
     std::string sig = solution_signature(sol);
-    if (std::find(seen.begin(), seen.end(), sig) != seen.end())
+    if (std::find(seen_feasible.begin(), seen_feasible.end(), sig) != seen_feasible.end())
       return false;
-    seen.push_back(sig);
-    pool.push_back(sol);
+    seen_feasible.push_back(sig);
+    pool_feasible.push_back(sol);
     return true;
   };
 
-  int max_attempts = std::max(config.num_solutions * 10, 30);
+  auto push_infeasible = [&](const Solution &sol) {
+    std::string sig = solution_signature(sol);
+    if (std::find(seen_infeasible.begin(), seen_infeasible.end(), sig) != seen_infeasible.end())
+      return false;
+    seen_infeasible.push_back(sig);
+    pool_infeasible.push_back(sol);
+    return true;
+  };
+
+  int target_feasible = (int)(config.num_solutions * 0.7);
+  if (target_feasible < 1 && config.num_solutions >= 2) {
+    target_feasible = 1;
+  }
+  int target_infeasible = config.num_solutions - target_feasible;
+
+  int max_attempts = std::max(config.num_solutions * 50, 200);
   int attempts = 0;
 
-  while ((int)pool.size() < config.num_solutions && attempts < max_attempts) {
+  while (attempts < max_attempts) {
+    if ((int)pool_feasible.size() >= target_feasible && (int)pool_infeasible.size() >= target_infeasible) {
+      break;
+    }
+    if (attempts >= 30 && (int)pool_feasible.size() + (int)pool_infeasible.size() >= config.num_solutions * 2) {
+      break;
+    }
     attempts++;
 
     Solution sol = greedy_constructive_randomized(inst, rng, config.top_k);
-    sol = postprocess_solution(inst, sol, config);
-    push_if_new(sol);
+    
+    // 1. Try to get a feasible version
+    Solution sol_feasible = postprocess_solution(inst, sol, config);
+    if (sol_feasible.feasible) {
+      push_feasible(sol_feasible);
+    } else {
+      push_infeasible(sol_feasible);
+    }
+
+    // 2. Also keep the raw unrepaired version as an infeasible candidate
+    Solution sol_infeasible = evaluate_solution(inst, sol);
+    if (!sol_infeasible.feasible) {
+      push_infeasible(sol_infeasible);
+    }
+  }
+
+  // Combine pools: first take up to target_feasible from feasible pool
+  int take_feasible = std::min(target_feasible, (int)pool_feasible.size());
+  for (int i = 0; i < take_feasible; ++i) {
+    pool.push_back(pool_feasible[i]);
+  }
+
+  // Then take up to target_infeasible from infeasible pool
+  int take_infeasible = std::min(target_infeasible, (int)pool_infeasible.size());
+  for (int i = 0; i < take_infeasible; ++i) {
+    pool.push_back(pool_infeasible[i]);
+  }
+
+  // Fill remaining slots if any
+  while ((int)pool.size() < config.num_solutions && take_feasible < (int)pool_feasible.size()) {
+    pool.push_back(pool_feasible[take_feasible++]);
+  }
+  while ((int)pool.size() < config.num_solutions && take_infeasible < (int)pool_infeasible.size()) {
+    pool.push_back(pool_infeasible[take_infeasible++]);
   }
 
   if (pool.empty()) {

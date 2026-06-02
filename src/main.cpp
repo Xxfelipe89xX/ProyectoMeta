@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -89,6 +90,43 @@ int main(int argc, char *argv[]) {
 
       print_instance_summary(inst);
       print_multi_greedy_summary(pool);
+
+      // Serialize pool of solutions to a JSON file
+      std::filesystem::create_directories("output/multigreedy_solutions");
+      std::filesystem::path p(instance_path);
+      std::string instance_name = p.stem().string();
+      std::string out_path = "output/multigreedy_solutions/" + instance_name + "_solutions.json";
+
+      std::ofstream out(out_path);
+      if (out.is_open()) {
+        out << "[\n";
+        for (size_t i = 0; i < pool.size(); ++i) {
+          const Solution &sol = pool[i];
+          out << "  {\n";
+          out << "    \"index\": " << (i + 1) << ",\n";
+          out << "    \"feasible\": " << (sol.feasible ? "true" : "false") << ",\n";
+          out << "    \"energy_kwh\": " << sol.total_energy_kwh << ",\n";
+          out << "    \"emissions_kg\": " << sol.total_emissions_kg << ",\n";
+          out << "    \"routes\": [\n";
+          for (size_t r = 0; r < sol.routes.size(); ++r) {
+            out << "      [";
+            for (size_t n = 0; n < sol.routes[r].size(); ++n) {
+              out << sol.routes[r][n];
+              if (n + 1 < sol.routes[r].size()) out << ", ";
+            }
+            out << "]";
+            if (r + 1 < sol.routes.size()) out << ",\n";
+            else out << "\n";
+          }
+          out << "    ]\n";
+          if (i + 1 < pool.size()) out << "  },\n";
+          else out << "  }\n";
+        }
+        out << "]\n";
+        std::cout << "\n[OK] Soluciones multigreedy guardadas en: " << out_path << "\n";
+      } else {
+        std::cerr << "\n[Error] No se pudo crear el archivo de soluciones: " << out_path << "\n";
+      }
 
       std::cout << "\nTiempo total multi-greedy (ms): " << total_ms << "\n";
       return 0;
