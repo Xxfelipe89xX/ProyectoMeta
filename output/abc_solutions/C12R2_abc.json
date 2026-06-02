@@ -1,0 +1,14 @@
+{
+  "instance": "C12R2",
+  "feasible": true,
+  "energy_kwh": 365.397,
+  "emissions_kg": 315.155,
+  "num_routes": 3,
+  "abc_time_ms": 172,
+  "initial_energy_kwh": 412.864,
+  "routes": [
+    [0, 7, 9, 15, 6, 11, 8, 13, 10, 1],
+    [0, 14, 14, 4, 12, 3, 1],
+    [0, 5, 2, 1]
+  ]
+}

@@ -1,0 +1,5 @@
+﻿set=small
+instances=15
+feasible_count=15
+feasible_pct=100
+csv=output\results_abc\small\small_abc_results.csv
