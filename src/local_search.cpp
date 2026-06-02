@@ -83,8 +83,6 @@ Solution improve_by_local_search_light(const Instance &inst,
                                      best.pos_from);
 
     int insert_pos = best.pos_to;
-    if (best.pos_to > best.pos_from)
-      insert_pos--;
 
     sol.routes[best.route_idx].insert(
         sol.routes[best.route_idx].begin() + insert_pos, node);

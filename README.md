@@ -32,8 +32,11 @@ ProyectoMeta/
 │   ├── large/
 │   └── json/
 ├── output/             
-│   └── results/
-└── run_batch.ps1       
+│   ├── results/
+│   ├── results_multigreedy/
+│   └── multigreedy_solutions/
+├── run_batch.ps1       
+└── run_batch_multigreedy.ps1
 ```
 
 ## Requisitos
@@ -77,17 +80,22 @@ Genera un pool de múltiples soluciones diversas usando la heurística construct
 ./evrp --multi-greedy instances/small/C12R2.txt
 ```
 
-Este modo construye varias soluciones independientes seleccionando aleatoriamente entre los `top_k` mejores candidatos en cada paso del greedy, aplicando opcionalmente reparación y búsqueda local a cada una. Las soluciones se ordenan por factibilidad y consumo energético.
+Este modo construye múltiples soluciones independientes seleccionando aleatoriamente entre los `top_k` mejores candidatos en cada paso del greedy, aplicando reparación y búsqueda local. Para asegurar la idoneidad como población inicial de algoritmos evolutivos (como **Bee Colony**), el pool de 10 soluciones resultantes se divide automáticamente en **al menos 7 soluciones factibles** y **al menos 3 soluciones infactibles** (o el mejor ratio posible).
+Las soluciones se guardan de forma serializada en formato estructurado JSON dentro del directorio `output/multigreedy_solutions/[nombre_instancia]_solutions.json`.
 
-### 5. Ejecutar lote de pruebas (Batch)
+### 5. Ejecutar lotes de pruebas (Batch)
 
-Para probar automáticamente todas las instancias y obtener métricas globales, utiliza el script de PowerShell:
-
+#### A. Ejecución de lote determinista estándar:
 ```powershell
 .\run_batch.ps1
 ```
-
 Este script iterará sobre las carpetas `small` y `large`, llamará a `./evrp --summary` y agrupará todos los resultados en archivos CSV y de resumen dentro de la carpeta `output/results/`.
+
+#### B. Ejecución de lote multi-greedy para Bee Colony:
+```powershell
+.\run_batch_multigreedy.ps1
+```
+Este script recorre todas las instancias corriendo el modo `--multi-greedy`. Exporta las métricas de rendimiento consolidadas en `output/results_multigreedy/` y deposita las secuencias detalladas de rutas en formato JSON en `output/multigreedy_solutions/`.
 
 ## ¿Qué hace el código actualmente?
 
@@ -97,6 +105,6 @@ Este script iterará sobre las carpetas `small` y `large`, llamará a `./evrp --
    - **Determinista** (`greedy_constructive`): siempre selecciona el mejor candidato.
    - **Aleatorizada** (`greedy_constructive_randomized`): selecciona aleatoriamente entre los `top_k` mejores candidatos en cada paso, permitiendo generar soluciones diversas.
 4. **Fase de reparación** (`repair.cpp`): identifica clientes que no fueron visitados e intenta reinsertarlos en rutas existentes o nuevas para buscar la factibilidad total.
-5. **Búsqueda local** (`local_search.cpp`): aplica operadores de mejora (como *relocate* intra-ruta limitados) buscando reducir el consumo energético.
+5. **Búsqueda local** (`local_search.cpp`): aplica operadores de mejora (*relocate* intra-ruta optimizado de paso simple) buscando reducir el consumo energético de las rutas válidas.
 6. **Evaluación de solución** (`solution.cpp`): verifica la factibilidad (batería, capacidad, cobertura de clientes) y reporta totales de energía, distancia y emisiones.
-7. **Generador multi-solución** (`multi_greedy.cpp`): genera un pool de soluciones diversas usando la constructiva aleatorizada, eliminando duplicados por firma de ruta, y aplicando opcionalmente reparación y búsqueda local a cada una.
+7. **Generador multi-solución** (`multi_greedy.cpp`): genera un pool balanceado de soluciones diversas usando la constructiva aleatorizada (manteniendo un split de 7/3 entre factibles e infactibles), eliminando duplicados por firma de ruta, y guardándolos en formato JSON.
