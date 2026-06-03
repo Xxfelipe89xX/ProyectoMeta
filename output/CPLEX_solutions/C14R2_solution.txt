@@ -1,0 +1,126 @@
+﻿CPLEX 22.1.2:   lim:time = 300
+  mip:gap = 0.01
+  tech:threads = 0
+  tech:mipdisplay = 1
+
+AMPL MP initial flat model has 2046 variables (0 integer, 966 binary);
+Objectives: 1 linear; 
+Constraints:  2963 linear;
+
+AMPL MP final model has 2046 variables (0 integer, 966 binary);
+Objectives: 1 linear; 
+Constraints:  2963 linear;
+
+
+Version identifier: 22.1.2.0 | 2024-11-25 | 0edbb82fd
+CPXPARAM_Simplex_Display                         0
+CPXPARAM_MIP_Display                             1
+CPXPARAM_Barrier_Display                         0
+CPXPARAM_TimeLimit                               300
+CPXPARAM_MIP_Tolerances_MIPGap                   0.01
+Tried aggregator 1 time.
+MIP Presolve eliminated 45 rows and 6 columns.
+MIP Presolve modified 870 coefficients.
+Reduced MIP has 2915 rows, 2040 columns, and 13753 nonzeros.
+Reduced MIP has 966 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.01 sec. (10.85 ticks)
+Probing fixed 63 vars, tightened 63 bounds.
+Probing time = 0.01 sec. (8.03 ticks)
+Tried aggregator 1 time.
+Detecting symmetries...
+MIP Presolve eliminated 189 rows and 126 columns.
+Reduced MIP has 2726 rows, 1914 columns, and 12820 nonzeros.
+Reduced MIP has 903 binaries, 15 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.02 sec. (8.27 ticks)
+Probing time = 0.02 sec. (4.25 ticks)
+MIP emphasis: balance optimality and feasibility.
+MIP search method: dynamic search.
+Parallel mode: deterministic, using up to 16 threads.
+
+Node log . . .
+Best integer =   3.770110e+02  Node =       0  Best node =   1.907094e+02
+Best integer =   3.253673e+02  Node =       0  Best node =   1.914517e+02
+Best integer =   3.080327e+02  Node =      27  Best node =   1.950109e+02
+Best integer =   2.575004e+02  Node =     177  Best node =   1.950109e+02
+
+Performing restart 1
+
+Repeating presolve.
+Tried aggregator 1 time.
+MIP Presolve eliminated 225 rows and 158 columns.
+MIP Presolve modified 552 coefficients.
+Reduced MIP has 2501 rows, 1756 columns, and 11461 nonzeros.
+Reduced MIP has 824 binaries, 15 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.02 sec. (7.83 ticks)
+Tried aggregator 1 time.
+Reduced MIP has 2501 rows, 1756 columns, and 11461 nonzeros.
+Reduced MIP has 824 binaries, 15 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.02 sec. (7.53 ticks)
+Represolve time = 0.06 sec. (36.22 ticks)
+Best integer =   2.568944e+02  Node =   25429  Best node =   2.266679e+02
+Best integer =   2.492441e+02  Node =   31718  Best node =   2.286875e+02
+Best integer =   2.488591e+02  Node =   37771  Best node =   2.307458e+02
+
+Performing restart 2
+
+Repeating presolve.
+Tried aggregator 1 time.
+MIP Presolve eliminated 103 rows and 158 columns.
+MIP Presolve modified 693 coefficients.
+Reduced MIP has 2398 rows, 1598 columns, and 16950 nonzeros.
+Reduced MIP has 745 binaries, 15 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.02 sec. (11.98 ticks)
+Tried aggregator 1 time.
+MIP Presolve modified 130 coefficients.
+Reduced MIP has 2398 rows, 1598 columns, and 16950 nonzeros.
+Reduced MIP has 745 binaries, 15 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (9.53 ticks)
+Represolve time = 0.36 sec. (225.18 ticks)
+Best integer =   2.488591e+02  Node =   48358  Best node =   2.141139e+02
+Best integer =   2.488591e+02  Node =   48358  Best node =   2.147610e+02
+
+GUB cover cuts applied:  61
+Cover cuts applied:  21
+Implied bound cuts applied:  221
+Flow cuts applied:  194
+Mixed integer rounding cuts applied:  371
+Zero-half cuts applied:  32
+Lift and project cuts applied:  118
+Gomory fractional cuts applied:  2
+CPLEX 22.1.2: optimal solution within tolerance; objective 248.8591396
+10482118 simplex iterations
+96687 branching nodes
+absmipgap=2.48835, relmipgap=0.00999902
+RESULT_START
+instance=C14R2
+status=solved
+status_num=0
+objective=248.85913962
+vehicles_used=2
+RESULT_END
+
+--- ROUTES ---
+Vehicle 1: 0 -> 5 -> 12 -> 17 -> 2 -> 14 -> 3 -> 9 -> 11 -> 1
+Vehicle 2: 0 -> 7 -> 4 -> 10 -> 15 -> 6 -> 8 -> 13 -> 1
+END_ROUTES
+
+--- ACTIVE ARCS ---
+from,to,vehicle,load_tons
+0,5,1,0.664400
+0,7,2,0.798000
+2,14,1,0.398200
+3,9,1,0.214700
+4,10,2,0.571600
+5,12,1,0.523300
+6,8,2,0.256300
+7,4,2,0.700500
+8,13,2,0.126000
+9,11,1,0.067700
+10,15,2,0.496600
+11,1,1,0.000000
+12,17,1,0.449200
+13,1,2,0.000000
+14,3,1,0.269900
+15,6,2,0.351500
+17,2,1,0.449200
+END_ARCS

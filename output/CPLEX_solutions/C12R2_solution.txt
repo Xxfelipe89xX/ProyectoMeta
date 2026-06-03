@@ -1,0 +1,112 @@
+﻿CPLEX 22.1.2:   lim:time = 300
+  mip:gap = 0.01
+  tech:threads = 0
+  tech:mipdisplay = 1
+
+AMPL MP initial flat model has 1644 variables (0 integer, 771 binary);
+Objectives: 1 linear; 
+Constraints:  2385 linear;
+
+AMPL MP final model has 1644 variables (0 integer, 771 binary);
+Objectives: 1 linear; 
+Constraints:  2385 linear;
+
+
+Version identifier: 22.1.2.0 | 2024-11-25 | 0edbb82fd
+CPXPARAM_Simplex_Display                         0
+CPXPARAM_MIP_Display                             1
+CPXPARAM_Barrier_Display                         0
+CPXPARAM_TimeLimit                               300
+CPXPARAM_MIP_Tolerances_MIPGap                   0.01
+Tried aggregator 1 time.
+MIP Presolve eliminated 54 rows and 6 columns.
+MIP Presolve modified 828 coefficients.
+Reduced MIP has 2328 rows, 1638 columns, and 10910 nonzeros.
+Reduced MIP has 771 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (8.55 ticks)
+Probing fixed 54 vars, tightened 54 bounds.
+Probing time = 0.00 sec. (5.61 ticks)
+Tried aggregator 1 time.
+Detecting symmetries...
+MIP Presolve eliminated 162 rows and 108 columns.
+Reduced MIP has 2166 rows, 1530 columns, and 10106 nonzeros.
+Reduced MIP has 717 binaries, 15 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (6.73 ticks)
+Probing time = 0.00 sec. (3.97 ticks)
+MIP emphasis: balance optimality and feasibility.
+MIP search method: dynamic search.
+Parallel mode: deterministic, using up to 16 threads.
+
+Node log . . .
+Best integer =   4.277218e+02  Node =    1027  Best node =   2.298581e+02
+Best integer =   4.249651e+02  Node =    1567  Best node =   2.307536e+02
+Best integer =   3.764507e+02  Node =    3716  Best node =   2.366988e+02
+Best integer =   3.679721e+02  Node =    3777  Best node =   2.367500e+02
+Best integer =   3.470020e+02  Node =    4172  Best node =   2.371554e+02
+
+Performing restart 1
+
+Repeating presolve.
+Tried aggregator 1 time.
+MIP Presolve modified 462 coefficients.
+Reduced MIP has 2166 rows, 1530 columns, and 9832 nonzeros.
+Reduced MIP has 717 binaries, 15 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (6.55 ticks)
+Tried aggregator 1 time.
+MIP Presolve modified 48 coefficients.
+Reduced MIP has 2166 rows, 1530 columns, and 9832 nonzeros.
+Reduced MIP has 717 binaries, 15 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.01 sec. (6.66 ticks)
+Represolve time = 0.05 sec. (45.49 ticks)
+Best integer =   3.470020e+02  Node =    4387  Best node =   2.301830e+02
+Best integer =   3.470020e+02  Node =    4387  Best node =   2.301830e+02
+Best integer =   3.242557e+02  Node =    4387  Best node =   2.375863e+02
+Best integer =   3.242557e+02  Node =    4387  Best node =   2.376235e+02
+Best integer =   2.827476e+02  Node =    4392  Best node =   2.378825e+02
+Best integer =   2.786760e+02  Node =    4429  Best node =   2.379043e+02
+
+GUB cover cuts applied:  39
+Cover cuts applied:  11
+Implied bound cuts applied:  61
+Flow cuts applied:  119
+Mixed integer rounding cuts applied:  195
+Zero-half cuts applied:  15
+Lift and project cuts applied:  75
+Gomory fractional cuts applied:  4
+CPLEX 22.1.2: optimal solution within tolerance; objective 278.6760424
+1368479 simplex iterations
+18782 branching nodes
+absmipgap=2.78394, relmipgap=0.00998989
+RESULT_START
+instance=C12R2
+status=solved
+status_num=0
+objective=278.67604236
+vehicles_used=3
+RESULT_END
+
+--- ROUTES ---
+Vehicle 1: 0 -> 14 -> 4 -> 10 -> 1
+Vehicle 2: 0 -> 8 -> 5 -> 2 -> 11 -> 6 -> 1
+Vehicle 3: 0 -> 13 -> 7 -> 9 -> 12 -> 3 -> 1
+END_ROUTES
+
+--- ACTIVE ARCS ---
+from,to,vehicle,load_tons
+0,8,2,0.502300
+0,13,3,0.569000
+0,14,1,0.236700
+2,11,2,0.192600
+3,1,3,0.000000
+4,10,1,0.099400
+5,2,2,0.332900
+6,1,2,0.000000
+7,9,3,0.380200
+8,5,2,0.447000
+9,12,3,0.270700
+10,1,1,0.000000
+11,6,2,0.137900
+12,3,3,0.125200
+13,7,3,0.458400
+14,4,1,0.236700
+END_ARCS

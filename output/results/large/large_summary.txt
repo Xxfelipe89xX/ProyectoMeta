@@ -1,0 +1,9 @@
+﻿set=large
+instances=40
+feasible=33
+infeasible=7
+feasible_pct=82.5
+avg_total_ms=442.42
+avg_energy_kwh_feasible=1839.6978
+avg_routes_feasible=4.15
+csv=output\results\large\large_results.csv
