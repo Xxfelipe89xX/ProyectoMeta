@@ -1,0 +1,12 @@
+{
+  "instance": "C20R2",
+  "feasible": true,
+  "energy_kwh": 490.828,
+  "emissions_kg": 423.339,
+  "num_routes": 1,
+  "abc_time_ms": 354,
+  "initial_energy_kwh": 762.629,
+  "routes": [
+    [0, 8, 9, 2, 5, 12, 20, 22, 10, 7, 15, 23, 3, 4, 19, 23, 11, 23, 14, 16, 17, 13, 22, 18, 6, 21, 1]
+  ]
+}

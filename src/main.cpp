@@ -4,6 +4,8 @@
 #include "../include/multi_greedy.hpp"
 #include "../include/repair.hpp"
 #include "../include/solution.hpp"
+#include "../include/abc.hpp"
+
 
 #include <chrono>
 #include <filesystem>
@@ -51,16 +53,30 @@ int main(int argc, char *argv[]) {
 
   bool summary_mode = false;
   bool multi_greedy_mode = false;
+  bool abc_mode = false;
   std::string instance_path;
 
-  if (argc >= 3 && std::string(argv[1]) == "--summary") {
-    summary_mode = true;
-    instance_path = argv[2];
-  } else if (argc >= 3 && std::string(argv[1]) == "--multi-greedy") {
-    multi_greedy_mode = true;
-    instance_path = argv[2];
-  } else {
-    instance_path = argv[1];
+  for (int i = 1; i < argc; ++i) {
+    std::string arg = argv[i];
+    if (arg == "--summary") {
+      summary_mode = true;
+    } else if (arg == "--multi-greedy") {
+      multi_greedy_mode = true;
+    } else if (arg == "--abc") {
+      abc_mode = true;
+    } else {
+      instance_path = arg;
+    }
+  }
+
+  if (instance_path.empty()) {
+    std::cerr << "Uso:\n";
+    std::cerr << "  ./evrp instances/small/C10R2.txt\n";
+    std::cerr << "  ./evrp --summary instances/small/C10R2.txt\n";
+    std::cerr << "  ./evrp --multi-greedy instances/small/C10R2.txt\n";
+    std::cerr << "  ./evrp --abc instances/small/C10R2.txt\n";
+    std::cerr << "  ./evrp --summary --abc instances/small/C10R2.txt\n";
+    return 1;
   }
 
   try {
@@ -129,6 +145,104 @@ int main(int argc, char *argv[]) {
       }
 
       std::cout << "\nTiempo total multi-greedy (ms): " << total_ms << "\n";
+      return 0;
+    }
+
+    if (abc_mode) {
+      ABCConfig cfg;
+      cfg.population_size = 10;
+      cfg.limit = 50;
+      cfg.max_iterations = 3000;
+      cfg.seed = 42;
+      cfg.route_elim_prob = 0.5;
+
+      // Run baseline constructive + LS first
+      Solution initial_best = greedy_constructive(inst);
+      initial_best = repair_missing_customers(inst, initial_best);
+      initial_best = improve_by_local_search_light(inst, initial_best, 10);
+      initial_best = evaluate_solution(inst, initial_best);
+
+      // Construct JSON solutions path and load it
+      std::filesystem::path p(instance_path);
+      std::string instance_name = p.stem().string();
+      std::string json_path = "output/multigreedy_solutions/" + instance_name + "_solutions.json";
+      std::vector<Solution> initial_pop = load_solutions_from_json(json_path);
+
+      auto t_abc_start = std::chrono::steady_clock::now();
+      Solution sol = run_artificial_bee_colony(inst, cfg, initial_pop);
+      auto t_abc_end = std::chrono::steady_clock::now();
+      auto abc_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_abc_end - t_abc_start).count();
+
+      // Export ABC solution to JSON
+      std::filesystem::create_directories("output/abc_solutions");
+      std::string abc_out_path = "output/abc_solutions/" + instance_name + "_abc.json";
+      std::ofstream abc_out(abc_out_path);
+      if (abc_out.is_open()) {
+        abc_out << "{\n";
+        abc_out << "  \"instance\": \"" << instance_name << "\",\n";
+        abc_out << "  \"feasible\": " << (sol.feasible ? "true" : "false") << ",\n";
+        abc_out << "  \"energy_kwh\": " << sol.total_energy_kwh << ",\n";
+        abc_out << "  \"emissions_kg\": " << sol.total_emissions_kg << ",\n";
+        abc_out << "  \"num_routes\": " << sol.routes.size() << ",\n";
+        abc_out << "  \"abc_time_ms\": " << abc_ms << ",\n";
+        abc_out << "  \"initial_energy_kwh\": " << initial_best.total_energy_kwh << ",\n";
+        abc_out << "  \"routes\": [\n";
+        for (size_t r = 0; r < sol.routes.size(); ++r) {
+          abc_out << "    [";
+          for (size_t n = 0; n < sol.routes[r].size(); ++n) {
+            abc_out << sol.routes[r][n];
+            if (n + 1 < sol.routes[r].size()) abc_out << ", ";
+          }
+          abc_out << "]";
+          if (r + 1 < sol.routes.size()) abc_out << ",\n";
+          else abc_out << "\n";
+        }
+        abc_out << "  ]\n";
+        abc_out << "}\n";
+        abc_out.close();
+        std::cerr << "[OK] Solucion ABC guardada en: " << abc_out_path << "\n";
+      }
+
+      if (summary_mode) {
+        std::filesystem::path p(instance_path);
+        std::string set_name = p.parent_path().filename().string();
+        std::string file_name = p.filename().string();
+        int visited = count_visited_customers(inst, sol);
+
+        std::cout << set_name << "," << file_name << ","
+                  << (sol.feasible ? "1" : "0") << "," << abc_ms << ","
+                  << (initial_best.feasible ? "1" : "0") << ","
+                  << initial_best.total_energy_kwh << ","
+                  << sol.total_energy_kwh << ","
+                  << sol.total_emissions_kg << "," << sol.routes.size() << ","
+                  << visited << "," << inst.customer_ids.size() << ","
+                  << "\"" << sol.error_message << "\""
+                  << "\n";
+        return 0;
+      }
+
+      print_instance_summary(inst);
+      std::cout << "========== INICIAL (GREEDY + LOCAL SEARCH) ==========\n";
+      print_solution(inst, initial_best);
+
+      std::cout << "\n========== RUNNING ARTIFICIAL BEE COLONY (ABC) ==========\n";
+      std::cout << "Parámetros:\n";
+      std::cout << "  Tamaño población (tau): " << cfg.population_size << "\n";
+      std::cout << "  Límite de intentos (limit): " << cfg.limit << "\n";
+      std::cout << "  Iteraciones máximas: " << cfg.max_iterations << "\n";
+      std::cout << "  Semilla: " << cfg.seed << "\n";
+      std::cout << "  Prob. eliminación ruta: " << cfg.route_elim_prob << "\n";
+
+      std::cout << "\n[Etapa] ABC Loop...\n";
+      std::cout << "[Etapa] Resultado final ABC:\n";
+      print_solution(inst, sol);
+
+      std::cout << "\nTiempo ABC (ms): " << abc_ms << "\n";
+      std::cout << "Consumo inicial: " << initial_best.total_energy_kwh << " kWh\n";
+      std::cout << "Consumo final ABC: " << sol.total_energy_kwh << " kWh\n";
+      std::cout << "Mejora respecto a inicial: " << (initial_best.total_energy_kwh - sol.total_energy_kwh) << " kWh ("
+                << (initial_best.total_energy_kwh > 0 ? (initial_best.total_energy_kwh - sol.total_energy_kwh) / initial_best.total_energy_kwh * 100.0 : 0.0)
+                << "%)\n";
       return 0;
     }
 
