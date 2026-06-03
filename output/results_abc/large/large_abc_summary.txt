@@ -1,0 +1,5 @@
+﻿set=large
+instances=40
+feasible_count=39
+feasible_pct=97.5
+csv=output\results_abc\large\large_abc_results.csv

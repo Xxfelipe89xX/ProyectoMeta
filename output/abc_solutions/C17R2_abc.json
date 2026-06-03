@@ -1,0 +1,14 @@
+{
+  "instance": "C17R2",
+  "feasible": true,
+  "energy_kwh": 348.245,
+  "emissions_kg": 300.361,
+  "num_routes": 3,
+  "abc_time_ms": 232,
+  "initial_energy_kwh": 346.499,
+  "routes": [
+    [0, 18, 12, 7, 17, 8, 19, 5, 2, 16, 11, 1],
+    [0, 13, 10, 14, 6, 9, 1],
+    [0, 15, 3, 4, 1]
+  ]
+}

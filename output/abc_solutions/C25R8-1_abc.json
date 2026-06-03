@@ -1,0 +1,12 @@
+{
+  "instance": "C25R8-1",
+  "feasible": true,
+  "energy_kwh": 581.651,
+  "emissions_kg": 501.674,
+  "num_routes": 1,
+  "abc_time_ms": 724,
+  "initial_energy_kwh": 911.108,
+  "routes": [
+    [0, 5, 3, 16, 33, 2, 11, 4, 24, 30, 17, 19, 12, 21, 8, 27, 23, 9, 18, 29, 6, 13, 25, 15, 10, 33, 20, 14, 7, 22, 31, 26, 1]
+  ]
+}

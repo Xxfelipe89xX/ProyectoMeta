@@ -1,0 +1,12 @@
+{
+  "instance": "C25R6-1",
+  "feasible": true,
+  "energy_kwh": 582.419,
+  "emissions_kg": 502.336,
+  "num_routes": 1,
+  "abc_time_ms": 736,
+  "initial_energy_kwh": 677.572,
+  "routes": [
+    [0, 19, 8, 17, 31, 2, 26, 11, 7, 22, 20, 32, 10, 13, 6, 15, 28, 25, 18, 21, 12, 29, 24, 4, 16, 27, 3, 14, 5, 32, 23, 9, 1]
+  ]
+}
