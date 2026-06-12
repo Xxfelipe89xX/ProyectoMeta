@@ -1,0 +1,16 @@
+﻿set,instance,feasible_solutions_out_of_10,best_feasible_energy,best_overall_energy,best_feasible_routes,min_routes_overall,generation_ms
+small,C10R2.txt,9,358.15,358.15,2,2,70
+small,C11R2.txt,10,291.72,291.72,2,1,62
+small,C12R2.txt,7,365.397,356.319,3,3,52
+small,C13R2.txt,7,516.661,516.661,1,1,33
+small,C14R2.txt,7,394.588,394.588,2,2,81
+small,C15R2.txt,9,532.719,532.719,3,2,133
+small,C16R2.txt,7,555.49,555.49,2,2,95
+small,C17R2.txt,7,400.295,381.892,3,3,62
+small,C18R2.txt,7,571.076,461.861,3,3,116
+small,C19R2.txt,10,427.581,427.581,2,2,176
+small,C20R2.txt,9,690.084,690.084,2,1,212
+small,C21R2.txt,9,663.991,622.526,2,2,298
+small,C22R2.txt,7,598.03,588.672,2,2,75
+small,C23R2.txt,7,555.014,374.257,3,2,99
+small,C24R2.txt,7,690.789,690.789,2,2,179

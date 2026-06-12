@@ -162,7 +162,6 @@ int main(int argc, char *argv[]) {
       initial_best = improve_by_local_search_light(inst, initial_best, 10);
       initial_best = evaluate_solution(inst, initial_best);
 
-      // Construct JSON solutions path and load it
       std::filesystem::path p(instance_path);
       std::string instance_name = p.stem().string();
       std::string json_path = "output/multigreedy_solutions/" + instance_name + "_solutions.json";
@@ -173,7 +172,6 @@ int main(int argc, char *argv[]) {
       auto t_abc_end = std::chrono::steady_clock::now();
       auto abc_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_abc_end - t_abc_start).count();
 
-      // Export ABC solution to JSON
       std::filesystem::create_directories("output/abc_solutions");
       std::string abc_out_path = "output/abc_solutions/" + instance_name + "_abc.json";
       std::ofstream abc_out(abc_out_path);

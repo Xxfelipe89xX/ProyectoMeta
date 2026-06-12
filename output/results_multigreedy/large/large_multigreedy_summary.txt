@@ -1,0 +1,5 @@
+﻿set=large
+instances=40
+at_least_one_feasible_count=39
+at_least_one_feasible_pct=97.5
+csv=output\results_multigreedy\large\large_multigreedy_results.csv

@@ -3,28 +3,25 @@ import math
 import os
 import json
 
-# ============================================================
-# PARAMETERS FROM THE PAPER
-# ============================================================
-GRID_SIZE = 200          # miles
-DEPOT_X = 100.0          # miles (center)
-DEPOT_Y = 100.0          # miles (center)
-DEMAND_MIN = 0.05        # tons
-DEMAND_MAX = 0.15        # tons
-BATTERY_CAPACITY = 110.0 # kWh
-VEHICLE_CAPACITY = 3.0   # tons
-ALPHA = 0.0981           # arc specific constant (g * Cr)
-BETA = 2.11              # vehicle specific constant (0.5 * Cd * A * rho)
-EFF_M = 1.25             # motor efficiency factor
-EFF_D = 1.11             # battery discharging efficiency factor
-EFF_P = 1.25             # recharging efficiency
-EMISSION_RATE = 0.69     # kg CO2 / kWh
-SPEED_SET = [30, 40, 60, 80]  # km/h
-CURB_WEIGHT = 2500       # kg (assumed)
+GRID_SIZE = 200        
+DEPOT_X = 100.0         
+DEPOT_Y = 100.0         
+DEMAND_MIN = 0.05       
+DEMAND_MAX = 0.15       
+BATTERY_CAPACITY = 110.0 
+VEHICLE_CAPACITY = 3.0   
+ALPHA = 0.0981           
+BETA = 2.11              
+EFF_M = 1.25            
+EFF_D = 1.11            
+EFF_P = 1.25            
+EMISSION_RATE = 0.69     
+SPEED_SET = [30, 40, 60, 80]  
+CURB_WEIGHT = 2500      
 MILES_TO_KM = 1.60934
 MILES_TO_M = 1609.34
 
-SEED = 2018  # reproducible seed (publication year)
+SEED = 2018 
 
 
 def euclidean_distance_miles(p1, p2):
@@ -74,15 +71,14 @@ def compute_energy_kwh(d_miles, speed_kmh, load_kg):
     d in meters, s in m/s, load in kg
     """
     d_m = d_miles * MILES_TO_M
-    s_ms = speed_kmh * 1000.0 / 3600.0  # km/h -> m/s
+    s_ms = speed_kmh * 1000.0 / 3600.0 
     w_plus_L = CURB_WEIGHT + load_kg
     energy_joules = EFF_D * EFF_M * (ALPHA * w_plus_L * d_m + BETA * (s_ms ** 2) * d_m)
-    energy_kwh = energy_joules / 3_600_000.0  # J -> kWh
+    energy_kwh = energy_joules / 3_600_000.0 
     return energy_kwh
 
 
 def write_instance(instance, output_dir):
-    """Write instance to a text file in a parseable format."""
     name = instance['name']
     filepath = os.path.join(output_dir, f"{name}.txt")
 
@@ -95,7 +91,6 @@ def write_instance(instance, output_dir):
     speeds = instance['speeds']
     max_vehicles = instance['max_vehicles']
 
-    # Total vertices: depot(0) + customers(1..N) + stations(N+1..N+Ns)
     all_nodes = [depot] + customers + stations
     n_total = len(all_nodes)
 
@@ -115,7 +110,6 @@ def write_instance(instance, output_dir):
         f.write(f"#   with d in meters, s in m/s\n")
         f.write(f"\n")
 
-        # Parameters section
         f.write(f"NAME: {name}\n")
         f.write(f"CUSTOMERS: {n_cust}\n")
         f.write(f"STATIONS: {n_stat}\n")
@@ -147,7 +141,6 @@ def write_instance(instance, output_dir):
             f.write(f"{n_cust+1+i}\tS\t{stations[i][0]:.2f}\t{stations[i][1]:.2f}\t0.0000\n")
         f.write(f"\n")
 
-        # Distance matrix (miles)
         f.write(f"DISTANCE_MATRIX_MILES\n")
         for i in range(n_total):
             row_vals = []
@@ -160,7 +153,6 @@ def write_instance(instance, output_dir):
             f.write("\t".join(row_vals) + "\n")
         f.write(f"\n")
 
-        # Speed matrix (km/h)
         f.write(f"SPEED_MATRIX_KMH\n")
         for i in range(n_total):
             row_vals = []
@@ -187,7 +179,6 @@ def write_instance_json(instance, output_dir):
     all_nodes = [instance['depot']] + instance['customers'] + instance['stations']
     n_total = len(all_nodes)
 
-    # Build distance matrix
     dist_matrix = []
     for i in range(n_total):
         row = []
@@ -198,7 +189,6 @@ def write_instance_json(instance, output_dir):
                 row.append(round(euclidean_distance_miles(all_nodes[i], all_nodes[j]), 4))
         dist_matrix.append(row)
 
-    # Build speed matrix
     speed_matrix = []
     for i in range(n_total):
         row = []
@@ -249,7 +239,6 @@ def write_instance_json(instance, output_dir):
 
 
 def main():
-    # Create output directories
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     small_dir = os.path.join(base_dir, "instances", "small")
     large_dir = os.path.join(base_dir, "instances", "large")
@@ -260,27 +249,23 @@ def main():
 
     master_rng = random.Random(SEED)
 
-    # ============================================================
-    # SMALL SIZE INSTANCES (Section 5.1)
-    # 15 instances: C10R2 through C24R2
-    # ============================================================
+
     print("=" * 60)
     print("Generating SMALL SIZE instances (C10R2 - C24R2)")
     print("=" * 60)
 
     small_instances = []
-    for n_cust in range(10, 25):  # 10 to 24 inclusive = 15 instances
+    for n_cust in range(10, 25): 
         name = f"C{n_cust}R2"
         n_stat = 2
 
-        # Each small instance has independent random locations
         rng_seed = master_rng.randint(0, 2**31)
         rng = random.Random(rng_seed)
 
         customers = generate_customers(n_cust, rng)
         demands = generate_demands(n_cust, rng)
         stations = generate_stations(n_stat, rng)
-        n_total = 1 + n_cust + n_stat  # depot + customers + stations
+        n_total = 1 + n_cust + n_stat  
         speeds = generate_speed_matrix(n_total, rng)
 
         total_demand = sum(demands)
@@ -304,12 +289,7 @@ def main():
         print(f"  {name}: {n_cust} customers, {n_stat} stations, "
               f"total demand = {total_demand:.3f} tons, max vehicles = {max_vehicles}")
 
-    # ============================================================
-    # LARGE SIZE INSTANCES (Section 5.1)
-    # 40 instances: C{25,50,75,100,150}R{2,4,6,8}-{1,2}
-    # For -1 and -2 variants: same customer locations,
-    # different recharging station locations
-    # ============================================================
+
     print("\n" + "=" * 60)
     print("Generating LARGE SIZE instances")
     print("=" * 60)
@@ -320,8 +300,7 @@ def main():
     large_instances = []
 
     for n_cust in customer_counts:
-        # Generate a base set of customers for this customer count
-        # All instances with the same n_cust share these customer locations
+      
         cust_seed = master_rng.randint(0, 2**31)
         cust_rng = random.Random(cust_seed)
         base_customers = generate_customers(n_cust, cust_rng)
@@ -331,7 +310,6 @@ def main():
             for variant in [1, 2]:
                 name = f"C{n_cust}R{n_stat}-{variant}"
 
-                # Different station locations and speeds for each variant
                 var_seed = master_rng.randint(0, 2**31)
                 var_rng = random.Random(var_seed)
 
@@ -347,8 +325,8 @@ def main():
                     'n_customers': n_cust,
                     'n_stations': n_stat,
                     'depot': (DEPOT_X, DEPOT_Y),
-                    'customers': list(base_customers),  # copy
-                    'demands': list(base_demands),       # copy
+                    'customers': list(base_customers),  
+                    'demands': list(base_demands),      
                     'stations': stations,
                     'speeds': speeds,
                     'max_vehicles': max_vehicles,
@@ -360,9 +338,7 @@ def main():
                 print(f"  {name}: {n_cust} customers, {n_stat} stations, "
                       f"total demand = {total_demand:.3f} tons, max vehicles = {max_vehicles}")
 
-    # ============================================================
-    # SUMMARY
-    # ============================================================
+
     print("\n" + "=" * 60)
     print("GENERATION SUMMARY")
     print("=" * 60)

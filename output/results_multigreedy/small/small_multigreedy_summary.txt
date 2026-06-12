@@ -1,0 +1,5 @@
+﻿set=small
+instances=15
+at_least_one_feasible_count=15
+at_least_one_feasible_pct=100
+csv=output\results_multigreedy\small\small_multigreedy_results.csv

@@ -17,7 +17,6 @@
 #include <vector>
 
 
-// Helper to compute loads carried on each arc of a route
 static std::vector<double> get_arc_loads(const Instance &inst, const std::vector<int> &route) {
   std::vector<double> loads(route.size(), 0.0);
   double remaining = 0.0;
@@ -38,7 +37,6 @@ static std::vector<double> get_arc_loads(const Instance &inst, const std::vector
   return loads;
 }
 
-// Recharging Station Insertion using Minimum Detour (MBD)
 static std::vector<int> insert_stations_mbd(const Instance &inst, const std::vector<int> &customer_route) {
   std::vector<int> route;
   route.push_back(inst.depot_start);
@@ -53,7 +51,6 @@ static std::vector<int> insert_stations_mbd(const Instance &inst, const std::vec
   for (int iter = 0; iter < max_insertions; ++iter) {
     std::vector<double> loads = get_arc_loads(inst, route);
 
-    // Evaluate battery levels along the route
     std::vector<double> battery(route.size(), 0.0);
     battery[0] = inst.battery_capacity_kwh;
     
@@ -68,18 +65,16 @@ static std::vector<int> insert_stations_mbd(const Instance &inst, const std::vec
 
       double energy = arc_energy_kwh(inst, u, v, loads[i]);
       if (energy > battery[i] + 1e-9) {
-        violation_idx = i + 1; // v is unreachable
+        violation_idx = i + 1;
         break;
       }
       battery[i + 1] = battery[i] - energy;
     }
 
     if (violation_idx == -1) {
-      // No battery violation
       break;
     }
 
-    // Find the last recharging location index before the violation index
     int last_recharge_idx = 0;
     for (int k = violation_idx - 1; k >= 0; --k) {
       if (is_depot_start(inst, route[k]) || is_station(inst, route[k])) {
@@ -89,7 +84,6 @@ static std::vector<int> insert_stations_mbd(const Instance &inst, const std::vec
     }
 
     bool inserted = false;
-    // Try inserting a station after route[p], where p goes from violation_idx - 1 down to last_recharge_idx + 1
     for (int p = violation_idx - 1; p > last_recharge_idx; --p) {
       int u = route[p];
       int w = route[p + 1];
@@ -99,15 +93,12 @@ static std::vector<int> insert_stations_mbd(const Instance &inst, const std::vec
       double best_detour = std::numeric_limits<double>::max();
 
       for (int s : inst.station_ids) {
-        // Can we reach s from u?
         double energy_u_s = arc_energy_kwh(inst, u, s, load_at_u);
         if (energy_u_s > battery[p] + 1e-9) continue;
 
-        // Can we reach w from s with full battery?
         double energy_s_w = arc_energy_kwh(inst, s, w, load_at_u);
         if (energy_s_w > inst.battery_capacity_kwh + 1e-9) continue;
 
-        // Detour energy
         double detour = energy_u_s + energy_s_w - arc_energy_kwh(inst, u, w, load_at_u);
         if (detour < best_detour) {
           best_detour = detour;
@@ -123,7 +114,6 @@ static std::vector<int> insert_stations_mbd(const Instance &inst, const std::vec
     }
 
     if (!inserted) {
-      // Fallback: insert the best detour station at violation_idx - 1
       int p = violation_idx - 1;
       int u = route[p];
       int w = route[p + 1];
@@ -151,7 +141,6 @@ static std::vector<int> insert_stations_mbd(const Instance &inst, const std::vec
   return route;
 }
 
-// Remove all stations from the solution to obtain only customer sequences
 static std::vector<std::vector<int>> strip_stations(const Instance &inst, const Solution &sol) {
   std::vector<std::vector<int>> stripped;
   for (const auto &route : sol.routes) {
@@ -168,7 +157,6 @@ static std::vector<std::vector<int>> strip_stations(const Instance &inst, const 
   return stripped;
 }
 
-// Rebuild full solution by inserting stations into each customer route
 static Solution rebuild_solution(const Instance &inst, const std::vector<std::vector<int>> &customer_routes) {
   Solution sol;
   for (const auto &c_route : customer_routes) {
@@ -177,7 +165,6 @@ static Solution rebuild_solution(const Instance &inst, const std::vector<std::ve
   return sol;
 }
 
-// Structure to hold penalized evaluation results
 struct PenalizedEvaluation {
   double total_energy_kwh = 0.0;
   double capacity_violation_tons = 0.0;
@@ -191,7 +178,7 @@ struct PenalizedEvaluation {
     cost += alpha * capacity_violation_tons;
     cost += beta * battery_violation_kwh;
     if (missing_customers > 0) {
-      cost += missing_customers * 10000.0; // High static penalty
+      cost += missing_customers * 10000.0;
     }
     if (repeated_customers > 0) {
       cost += repeated_customers * 10000.0;
@@ -200,7 +187,6 @@ struct PenalizedEvaluation {
   }
 };
 
-// Penalized evaluation function
 static PenalizedEvaluation evaluate_solution_penalized(const Instance &inst, const Solution &sol) {
   PenalizedEvaluation eval;
   eval.feasible = true;
@@ -263,7 +249,6 @@ static PenalizedEvaluation evaluate_solution_penalized(const Instance &inst, con
   return eval;
 }
 
-// Helper to generate a random customer-based solution
 static Solution generate_random_abc_solution(const Instance &inst, std::mt19937 &rng) {
   std::vector<int> customers = inst.customer_ids;
   std::shuffle(customers.begin(), customers.end(), rng);
@@ -291,7 +276,6 @@ static Solution generate_random_abc_solution(const Instance &inst, std::mt19937 
   return rebuild_solution(inst, customer_routes);
 }
 
-// Neighborhood Operators applied on customer routes
 static void apply_neighborhood_operator(std::vector<std::vector<int>> &customer_routes, int op_type, std::mt19937 &rng) {
   std::vector<int> flat;
   std::vector<size_t> route_sizes;
@@ -356,7 +340,6 @@ static void apply_neighborhood_operator(std::vector<std::vector<int>> &customer_
     }
   }
 
-  // Restore back into customer_routes
   customer_routes.clear();
   size_t offset = 0;
   for (size_t size : route_sizes) {
@@ -367,7 +350,6 @@ static void apply_neighborhood_operator(std::vector<std::vector<int>> &customer_
   }
 }
 
-// Route Elimination Procedure
 static void route_elimination(const Instance &inst, std::vector<std::vector<int>> &customer_routes, std::mt19937 &rng) {
   if (customer_routes.size() <= 1) return;
 
@@ -488,13 +470,11 @@ Solution run_artificial_bee_colony(const Instance &inst, const ABCConfig &config
   int tau = config.population_size;
   std::vector<Solution> population;
 
-  // Use the loaded solutions if available
   for (const auto &sol : initial_pop) {
     if (population.size() >= (size_t)tau) break;
     population.push_back(sol);
   }
 
-  // If we need more solutions, use multi-greedy constructive to initialize
   if (population.size() < (size_t)tau) {
     MultiGreedyConfig mg_cfg;
     mg_cfg.num_solutions = tau - population.size();
@@ -512,12 +492,10 @@ Solution run_artificial_bee_colony(const Instance &inst, const ABCConfig &config
     }
   }
 
-  // If still not enough, generate random solutions
   while ((int)population.size() < tau) {
     population.push_back(generate_random_abc_solution(inst, rng));
   }
 
-  // Evaluate initial fitness
   std::vector<PenalizedEvaluation> evaluations(tau);
   std::vector<double> fitness(tau);
   std::vector<int> trial_counters(tau, 0);
@@ -531,7 +509,6 @@ Solution run_artificial_bee_colony(const Instance &inst, const ABCConfig &config
   Solution best_feasible_sol;
   double best_feasible_energy = std::numeric_limits<double>::max();
 
-  // Track initial best feasible solution
   for (int i = 0; i < tau; ++i) {
     if (evaluations[i].feasible) {
       Solution evaluated = evaluate_solution(inst, population[i]);
@@ -542,27 +519,21 @@ Solution run_artificial_bee_colony(const Instance &inst, const ABCConfig &config
     }
   }
 
-  // Distribution for neighborhood operator selection (0: Swap, 1: Reverse, 2: Swap-Reversal)
   std::uniform_int_distribution<int> dist_operator(0, 2);
   std::uniform_real_distribution<double> dist_elim(0.0, 1.0);
 
-  // Main ABC Loop
   for (int iter = 0; iter < config.max_iterations; ++iter) {
-    // --- Phase 1: Employed Bees ---
+    // Employed Bees
     for (int i = 0; i < tau; ++i) {
-      // Strip stations from current solution
       std::vector<std::vector<int>> c_routes = strip_stations(inst, population[i]);
 
-      // Apply random neighborhood operator on customer routes
       int op = dist_operator(rng);
       apply_neighborhood_operator(c_routes, op, rng);
 
-      // Route elimination
       if (dist_elim(rng) < config.route_elim_prob) {
         route_elimination(inst, c_routes, rng);
       }
 
-      // Re-insert stations (MBD)
       Solution cand_sol = rebuild_solution(inst, c_routes);
       PenalizedEvaluation cand_eval = evaluate_solution_penalized(inst, cand_sol);
 
@@ -575,7 +546,6 @@ Solution run_artificial_bee_colony(const Instance &inst, const ABCConfig &config
         fitness[i] = (cand_cost >= 0) ? (1.0 / (cand_cost + 1e-9)) : (1.0 + std::abs(cand_cost));
         trial_counters[i] = 0;
 
-        // Check feasibility
         if (cand_eval.feasible) {
           Solution evaluated = evaluate_solution(inst, cand_sol);
           if (evaluated.feasible && evaluated.total_energy_kwh < best_feasible_energy) {
@@ -588,8 +558,7 @@ Solution run_artificial_bee_colony(const Instance &inst, const ABCConfig &config
       }
     }
 
-    // --- Phase 2: Onlooker Bees ---
-    // Calculate selection probabilities
+    // Onlooker Bees
     double sum_fitness = 0.0;
     for (double f : fitness) {
       sum_fitness += f;
@@ -606,9 +575,7 @@ Solution run_artificial_bee_colony(const Instance &inst, const ABCConfig &config
       }
     }
 
-    // Select and exploit
     for (int o = 0; o < tau; ++o) {
-      // Roulette Wheel selection
       double r_val = dist_elim(rng);
       double accum = 0.0;
       int selected_idx = tau - 1;
@@ -620,7 +587,6 @@ Solution run_artificial_bee_colony(const Instance &inst, const ABCConfig &config
         }
       }
 
-      // Mutate selected solution
       std::vector<std::vector<int>> c_routes = strip_stations(inst, population[selected_idx]);
       int op = dist_operator(rng);
       apply_neighborhood_operator(c_routes, op, rng);
@@ -653,10 +619,9 @@ Solution run_artificial_bee_colony(const Instance &inst, const ABCConfig &config
       }
     }
 
-    // --- Phase 3: Scout Bees ---
+    // Scout Bees
     for (int i = 0; i < tau; ++i) {
       if (trial_counters[i] >= config.limit) {
-        // Discard food source, generate a new random one
         population[i] = generate_random_abc_solution(inst, rng);
         evaluations[i] = evaluate_solution_penalized(inst, population[i]);
         double cost = evaluations[i].get_total_cost(alpha, beta);
@@ -673,7 +638,7 @@ Solution run_artificial_bee_colony(const Instance &inst, const ABCConfig &config
       }
     }
 
-    // --- Phase 4: Dynamic Penalty Update ---
+    //  Dynamic Penalty
     int feasible_count = 0;
     for (int i = 0; i < tau; ++i) {
       if (evaluations[i].feasible) {
@@ -690,12 +655,10 @@ Solution run_artificial_bee_colony(const Instance &inst, const ABCConfig &config
     }
   }
 
-  // Return the best feasible solution found. If none was feasible (unlikely), return the best overall from population.
   if (best_feasible_energy < std::numeric_limits<double>::max()) {
     return best_feasible_sol;
   }
 
-  // Fallback to the best penalized solution in the current population
   int best_idx = 0;
   double best_cost = evaluations[0].get_total_cost(alpha, beta);
   for (int i = 1; i < tau; ++i) {

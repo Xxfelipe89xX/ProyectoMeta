@@ -90,7 +90,6 @@ generate_greedy_solutions(const Instance &inst,
 
     Solution sol = greedy_constructive_randomized(inst, rng, config.top_k);
     
-    // 1. Try to get a feasible version
     Solution sol_feasible = postprocess_solution(inst, sol, config);
     if (sol_feasible.feasible) {
       push_feasible(sol_feasible);
@@ -98,26 +97,22 @@ generate_greedy_solutions(const Instance &inst,
       push_infeasible(sol_feasible);
     }
 
-    // 2. Also keep the raw unrepaired version as an infeasible candidate
     Solution sol_infeasible = evaluate_solution(inst, sol);
     if (!sol_infeasible.feasible) {
       push_infeasible(sol_infeasible);
     }
   }
 
-  // Combine pools: first take up to target_feasible from feasible pool
   int take_feasible = std::min(target_feasible, (int)pool_feasible.size());
   for (int i = 0; i < take_feasible; ++i) {
     pool.push_back(pool_feasible[i]);
   }
 
-  // Then take up to target_infeasible from infeasible pool
   int take_infeasible = std::min(target_infeasible, (int)pool_infeasible.size());
   for (int i = 0; i < take_infeasible; ++i) {
     pool.push_back(pool_infeasible[i]);
   }
 
-  // Fill remaining slots if any
   while ((int)pool.size() < config.num_solutions && take_feasible < (int)pool_feasible.size()) {
     pool.push_back(pool_feasible[take_feasible++]);
   }
